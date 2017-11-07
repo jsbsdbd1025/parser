@@ -8,53 +8,69 @@ public class GsonParser implements Parser {
     @Override
     public String toSerialize(Object o) {
 
-        List root = transform(o);
+        Element root = transform(o);
+
 
         return toJson(root, 0);
     }
 
     // TODO: 2017/11/7  最外层可能为数组
 
-    private List<Element> transform(Object o) {
-        List<Element> result = new ArrayList<>();
+    private Element transform(Object o) {
+
+        Element parent = new Element(null, o);
         Class clazz = o.getClass();
 
         Field[] fields = clazz.getDeclaredFields();
-
         for (Field f : fields) {
+
             try {
                 if (f.getName() == "this$0") {
                     continue;
                 }
                 f.setAccessible(true);
-                result.add(new Element(f.getType(), f.getName(), f.get(o)));
+
+                Element son = new Element(f.getName(), f.get(o));
+
+                if (f.getType().isAssignableFrom(List.class)) {
+                    List list = (List) f.get(o);
+
+                    for (int i = 0; i < list.size(); i++) {
+                        son.sonList.add(transform(list.get(i)));
+                    }
+                }
+
+                parent.sonList.add(son);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
         }
-        return result;
+
+        return parent;
     }
 
 
-    private String toJson(List<Element> list, int tab) {
+    private String toJson(Element parent, int tab) {
 
         StringBuffer stringBuffer = new StringBuffer();
 
-        for (Element e : list) {
-            if (e.value == null) {
-                continue;
-            }
+        if (parent.sonList.size() == 0) {
+            return "";
+        }
 
+        if (parent.key != null) {
+
+            stringBuffer.append("\"");
+            stringBuffer.append(parent.value);
+            stringBuffer.append("\"");
+        }
+
+
+        for (Element e : parent.sonList) {
             if (stringBuffer.length() != 0) {
-                stringBuffer.append(",\n");
-            } else {
-                for (int i = 0; i < tab; i++) {
-                    stringBuffer.append("\t");
-                }
-
-                stringBuffer.append("{\n");
+                stringBuffer.append(",");
             }
-
+            stringBuffer.append("\n");
             for (int i = 0; i <= tab; i++) {
                 stringBuffer.append("\t");
             }
@@ -62,30 +78,18 @@ public class GsonParser implements Parser {
             stringBuffer.append("\"");
             stringBuffer.append(e.getKey());
             stringBuffer.append("\":");
-            if ((e.type.isAssignableFrom(String.class))) {
+
+            if ((e.isAssignableFrom(String.class))) {
                 stringBuffer.append("\"");
                 stringBuffer.append(e.value);
                 stringBuffer.append("\"");
-            } else if (e.type.isAssignableFrom(Double.class)) {
+            } else if (e.isAssignableFrom(Double.class)) {
                 stringBuffer.append(new BigDecimal(e.value.toString()).toString());
-            } else if (e.type.isAssignableFrom(double.class)) {
+            } else if (e.isAssignableFrom(double.class)) {
                 stringBuffer.append(new BigDecimal(e.value + "").toString());
-            } else if (e.type.isAssignableFrom(int[].class)) {
-                StringBuilder s = new StringBuilder();
-                for (int v : (int[]) e.value) {
-                    if (s.length() != 0) {
-                        s.append(",\n");
-                    }
-                    for (int i = 0; i < tab + 2; i++) {
-                        s.append("\t");
-                    }
-                    s.append(v);
-                }
-                stringBuffer.append("[\n");
-                stringBuffer.append(s.toString());
-                stringBuffer.append("\n\t]");
-
-            } else if (e.type.isAssignableFrom(String[].class)) {
+            } else if (e.isAssignableFrom(int.class)) {
+                stringBuffer.append(String.valueOf(e.value));
+            } else if (e.isAssignableFrom(String[].class)) {
 
                 StringBuilder s = new StringBuilder();
                 for (String v : (String[]) e.value) {
@@ -102,14 +106,30 @@ public class GsonParser implements Parser {
                 stringBuffer.append("[\n");
                 stringBuffer.append(s.toString());
                 stringBuffer.append("\n\t]");
-            } else if ((e.type.isAssignableFrom(List.class))) {
-                StringBuffer s = new StringBuffer();
-
-                for (Object o : ((List) e.value)) {
+            } else if (e.isAssignableFrom(int[].class)) {
+                StringBuilder s = new StringBuilder();
+                for (int v : (int[]) e.value) {
                     if (s.length() != 0) {
                         s.append(",\n");
                     }
-                    s.append(toJson(transform(o), tab + 2));
+                    for (int i = 0; i < tab + 2; i++) {
+                        s.append("\t");
+                    }
+                    s.append(v);
+                }
+                stringBuffer.append("[\n");
+                stringBuffer.append(s.toString());
+                stringBuffer.append("\n\t]");
+
+
+            } else if (e.isAssignableFrom(ArrayList.class)) {
+                StringBuffer s = new StringBuffer();
+
+                for (Element o : e.sonList) {
+                    if (s.length() != 0) {
+                        s.append(",\n");
+                    }
+                    s.append(toJson(o, tab + 2));
                 }
 
                 stringBuffer.append("[\n");
@@ -118,16 +138,21 @@ public class GsonParser implements Parser {
             } else {
                 stringBuffer.append(e.value);
             }
+
         }
 
-        stringBuffer.append("\n");
-
+        StringBuilder result = new StringBuilder();
         for (int i = 0; i < tab; i++) {
-            stringBuffer.append("\t");
+            result.append("\t");
         }
-
-        stringBuffer.append("}");
-        return stringBuffer.toString();
+        result.append("{");
+        result.append(stringBuffer);
+        result.append("\n");
+        for (int i = 0; i < tab; i++) {
+            result.append("\t");
+        }
+        result.append("}");
+        return result.toString();
     }
 
     @Override
@@ -135,27 +160,6 @@ public class GsonParser implements Parser {
         return fromJson(s, t);
     }
 
-
-    private List<Element> transform(String s) {
-        List<Element> result = new ArrayList<>();
-
-//            Class clazz = o.getClass();
-//
-//            Field[] fields = clazz.getDeclaredFields();
-//
-//            for (Field f : fields) {
-//                try {
-//                    if (f.getName() == "this$0") {
-//                        continue;
-//                    }
-//                    f.setAccessible(true);
-//                    result.add(new Element(f.getType(), f.getName(), f.get(o)));
-//                } catch (IllegalAccessException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-        return result;
-    }
 
     private <T> T fromJson(String s, Class<T> t) {
 

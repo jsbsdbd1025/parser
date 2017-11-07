@@ -8,8 +8,8 @@ public class Person {
     int age;
     float height;
     double money;
-    //    List<bean.Number> nums = new ArrayList<>();
-    int[] nums;
+        List<bean.Number> nums = new ArrayList<>();
+//    int[] nums;
 
     public Person() {
     }
@@ -52,21 +52,21 @@ public class Person {
     public void setMoney(double money) {
         this.money = money;
     }
-//
-//    public List<bean.Number> getNums() {
-//        return nums;
-//    }
-//
-//    public void setNums(List<bean.Number> nums) {
-//        this.nums = nums;
-//    }
 
-
-    public int[] getNums() {
+    public List<bean.Number> getNums() {
         return nums;
     }
 
-    public void setNums(int[] nums) {
+    public void setNums(List<bean.Number> nums) {
         this.nums = nums;
     }
+
+//
+//    public int[] getNums() {
+//        return nums;
+//    }
+//
+//    public void setNums(int[] nums) {
+//        this.nums = nums;
+//    }
 }

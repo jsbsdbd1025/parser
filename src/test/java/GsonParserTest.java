@@ -18,13 +18,13 @@ public class GsonParserTest {
         String[] name = {"bob", "tony"};
         person = new Person(name, 18, 1.78f, 82347983.984297);
 
-//        List<bean.Number> nums = new ArrayList();
-//        for (int i = 0; i < 10; i++) {
-//            nums.add(new bean.Number(i, String.valueOf(i)));
-//        }
-//        person.setNums(nums);
-        int[] nums = {1, 2, 3, 4, 5};
+        List<bean.Number> nums = new ArrayList();
+        for (int i = 0; i < 10; i++) {
+            nums.add(new bean.Number(i, String.valueOf(i)));
+        }
         person.setNums(nums);
+//        int[] nums = {1, 2, 3, 4, 5};
+//        person.setNums(nums);
     }
 
 
