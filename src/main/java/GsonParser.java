@@ -13,6 +13,8 @@ public class GsonParser implements Parser {
         return toJson(root, 0);
     }
 
+    // TODO: 2017/11/7  最外层可能为数组
+
     private List<Element> transform(Object o) {
         List<Element> result = new ArrayList<>();
         Class clazz = o.getClass();
@@ -33,36 +35,73 @@ public class GsonParser implements Parser {
         return result;
     }
 
+
     private String toJson(List<Element> list, int tab) {
 
-        StringBuffer str = new StringBuffer();
+        StringBuffer stringBuffer = new StringBuffer();
 
         for (Element e : list) {
             if (e.value == null) {
                 continue;
             }
 
-            if (str.length() != 0) {
-                str.append(",\n");
+            if (stringBuffer.length() != 0) {
+                stringBuffer.append(",\n");
             } else {
                 for (int i = 0; i < tab; i++) {
-                    str.append("\t");
+                    stringBuffer.append("\t");
                 }
 
-                str.append("{\n");
+                stringBuffer.append("{\n");
             }
 
             for (int i = 0; i <= tab; i++) {
-                str.append("\t");
+                stringBuffer.append("\t");
             }
 
-            str.append("\"" + e.getKey() + "\":");
+            stringBuffer.append("\"");
+            stringBuffer.append(e.getKey());
+            stringBuffer.append("\":");
             if ((e.type.isAssignableFrom(String.class))) {
-                str.append("\"" + e.value + "\"");
-            } else if ((e.type.isAssignableFrom(Double.class))) {
-                str.append(new BigDecimal(e.value.toString()).toString());
-            } else if ((e.type.isAssignableFrom(double.class))) {
-                str.append(new BigDecimal(e.value + "").toString());
+                stringBuffer.append("\"");
+                stringBuffer.append(e.value);
+                stringBuffer.append("\"");
+            } else if (e.type.isAssignableFrom(Double.class)) {
+                stringBuffer.append(new BigDecimal(e.value.toString()).toString());
+            } else if (e.type.isAssignableFrom(double.class)) {
+                stringBuffer.append(new BigDecimal(e.value + "").toString());
+            } else if (e.type.isAssignableFrom(int[].class)) {
+                StringBuilder s = new StringBuilder();
+                for (int v : (int[]) e.value) {
+                    if (s.length() != 0) {
+                        s.append(",\n");
+                    }
+                    for (int i = 0; i < tab + 2; i++) {
+                        s.append("\t");
+                    }
+                    s.append(v);
+                }
+                stringBuffer.append("[\n");
+                stringBuffer.append(s.toString());
+                stringBuffer.append("\n\t]");
+
+            } else if (e.type.isAssignableFrom(String[].class)) {
+
+                StringBuilder s = new StringBuilder();
+                for (String v : (String[]) e.value) {
+                    if (s.length() != 0) {
+                        s.append(",\n");
+                    }
+                    for (int i = 0; i < tab + 2; i++) {
+                        s.append("\t");
+                    }
+                    s.append("\"");
+                    s.append(v);
+                    s.append("\"");
+                }
+                stringBuffer.append("[\n");
+                stringBuffer.append(s.toString());
+                stringBuffer.append("\n\t]");
             } else if ((e.type.isAssignableFrom(List.class))) {
                 StringBuffer s = new StringBuffer();
 
@@ -73,25 +112,49 @@ public class GsonParser implements Parser {
                     s.append(toJson(transform(o), tab + 2));
                 }
 
-                str.append("[\n" + s.toString() + "\n\t]");
+                stringBuffer.append("[\n");
+                stringBuffer.append(s.toString());
+                stringBuffer.append("\n\t]");
             } else {
-                str.append(e.value);
+                stringBuffer.append(e.value);
             }
         }
 
-        str.append("\n");
+        stringBuffer.append("\n");
 
         for (int i = 0; i < tab; i++) {
-            str.append("\t");
+            stringBuffer.append("\t");
         }
 
-        str.append("}");
-        return str.toString();
+        stringBuffer.append("}");
+        return stringBuffer.toString();
     }
 
     @Override
     public <T> T fromSerialize(String s, Class<T> t) {
         return fromJson(s, t);
+    }
+
+
+    private List<Element> transform(String s) {
+        List<Element> result = new ArrayList<>();
+
+//            Class clazz = o.getClass();
+//
+//            Field[] fields = clazz.getDeclaredFields();
+//
+//            for (Field f : fields) {
+//                try {
+//                    if (f.getName() == "this$0") {
+//                        continue;
+//                    }
+//                    f.setAccessible(true);
+//                    result.add(new Element(f.getType(), f.getName(), f.get(o)));
+//                } catch (IllegalAccessException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+        return result;
     }
 
     private <T> T fromJson(String s, Class<T> t) {

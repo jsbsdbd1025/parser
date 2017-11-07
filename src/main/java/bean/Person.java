@@ -1,32 +1,31 @@
+package bean;
+
 import java.util.ArrayList;
 import java.util.List;
 
-class Person<T> {
-    private String name;
+public class Person {
+    private String name[];
     int age;
     float height;
     double money;
-    List<T> nums = new ArrayList<>();
+    //    List<bean.Number> nums = new ArrayList<>();
+    int[] nums;
 
     public Person() {
     }
 
-    public Person(String name, int age, float height, double money) {
+    public Person(String name[], int age, float height, double money) {
         this.name = name;
         this.age = age;
         this.height = height;
         this.money = money;
     }
 
-    public void setNums(List<T> nums) {
-        this.nums = nums;
-    }
-
-    public String getName() {
+    public String[] getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(String[] name) {
         this.name = name;
     }
 
@@ -53,8 +52,21 @@ class Person<T> {
     public void setMoney(double money) {
         this.money = money;
     }
+//
+//    public List<bean.Number> getNums() {
+//        return nums;
+//    }
+//
+//    public void setNums(List<bean.Number> nums) {
+//        this.nums = nums;
+//    }
 
-    public List<T> getNums() {
+
+    public int[] getNums() {
         return nums;
+    }
+
+    public void setNums(int[] nums) {
+        this.nums = nums;
     }
 }

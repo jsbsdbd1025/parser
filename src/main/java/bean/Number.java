@@ -1,4 +1,6 @@
-class Number {
+package bean;
+
+public class Number {
     int i;
     String n;
 

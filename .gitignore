@@ -1,0 +1,8 @@
+# Created by .ignore support plugin (hsz.mobi)
+.gitignore
+.idea/inspectionProfiles/
+.idea/vcs.xml
+out/
+src/main/resources/
+src/test/resources/
+gradle
